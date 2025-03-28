@@ -12,7 +12,7 @@ using testAPIDatabase.Context;
 namespace testAPIDatabase.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250328160636_InitCreate")]
+    [Migration("20250328164441_InitCreate")]
     partial class InitCreate
     {
         /// <inheritdoc />
