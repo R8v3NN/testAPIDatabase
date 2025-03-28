@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:latest
+    container_name: db
+    environment: 
+      POSTGRES_DB: ksiazka
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    volumes:
+      - "db:/var/lib/postgresql/data"
+    ports:
+      - "5432:5432"
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    environment: 
+      PGADMIN_DEFAULT_EMAIL: pgadmin@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: pgadminPassword
+    ports:
+      - "5050:80"
+volumes:
+  db:
