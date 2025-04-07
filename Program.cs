@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 using testAPIDatabase.Context;
+using testAPIDatabase.Handlers.Commands;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +16,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
 
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AddGenreCommandHandler).Assembly));
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

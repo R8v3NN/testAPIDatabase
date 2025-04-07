@@ -1,99 +1,125 @@
-﻿namespace testAPIDatabase.Controllers;
+﻿
+namespace testAPIDatabase.Controllers;
 
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using System.Xml.Linq;
+using System.Threading.Tasks;
 using testAPIDatabase.Context;
 using testAPIDatabase.Dtos;
-using testAPIDatabase.Entities;
+using testAPIDatabase.Handlers.Commands;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v2/[controller]/[action]")]
 public class GenreController : ControllerBase
 {
-    private readonly AppDbContext dbContext;
-    public GenreController(AppDbContext dbContext)
+    private readonly AppDbContext _dbContext;
+    private readonly IMediator _mediator;
+
+    public GenreController(AppDbContext dbContext, IMediator mediator)
     {
-        this.dbContext = dbContext;
+        _dbContext = dbContext;
+        _mediator = mediator;
     }
 
     [HttpGet]
-    public IActionResult GetAllGenres()
+    public async Task<IActionResult> GetAllGenres()
     {
-        var allGenres = dbContext.Genres.ToList();
-        return Ok(allGenres);
-    }
-
-    [HttpGet]
-    [Route("{id:guid}")]
-    public IActionResult GetGenreById(Guid id)
-    {
-        var genre = dbContext.Genres.Find(id);
-        if (genre is null)
+        try
         {
-            return NotFound();
+            var result = await _mediator.Send(new GetAllGenresCommand());
+            return Ok(result);
         }
-        return Ok(genre);
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetGenreById(Guid id)
+    {
+        try
+        {
+            var result = await _mediator.Send(new GetByIdGenreCommand { Id = id });
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpPost]
-    public IActionResult AddGenre(GenreInDto addGenreDto)
+    public async Task<IActionResult> AddGenre(GenreInDto addGenreDto)
     {
-        if (string.IsNullOrWhiteSpace(addGenreDto?.Name))
+        try
         {
-            return BadRequest("Genre name cannot be empty.");
+            var result = await _mediator.Send(new AddGenreCommand
+            {
+                Name = addGenreDto.Name
+            });
+            return Ok(result);
         }
-
-        var existingGenre = dbContext.Genres.FirstOrDefault(g => g.Name == addGenreDto.Name);
-
-        if (existingGenre is not null)
+        catch (ConflictException ex)
         {
-            return Conflict("Genre already exists.");
+            return Conflict(ex.Message); // 409
         }
-
-        var genreEntity = new Genre { Name = addGenreDto.Name };
-
-        dbContext.Genres.Add(genreEntity);
-        dbContext.SaveChanges();
-
-        return Ok(genreEntity);
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
-    [HttpPut]
-    public IActionResult UpdateGenre(Guid id, GenreInDto updateGenreInDto)
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> UpdateGenre(Guid id, GenreInDto updateGenreInDto)
     {
-        if (string.IsNullOrWhiteSpace(updateGenreInDto?.Name))
+        try
         {
-            return BadRequest("Genre name cannot be empty.");
-        }
+            var result = await _mediator.Send(new UpdateGenreCommand
+            {
+                Id = id,
+                Name = updateGenreInDto.Name
+            });
 
-        var genre = dbContext.Genres.Find(id);
-        if (genre is null)
+            return Ok(result);
+        }
+        catch (ConflictException ex)
         {
-            return NotFound();
+            return Conflict(ex.Message); // 409
         }
-
-        var existingGenre = dbContext.Genres.FirstOrDefault(g => g.Name == updateGenreInDto.Name);
-        if (existingGenre is not null)
+        catch (KeyNotFoundException ex)
         {
-            return Conflict("Genre already exists.");
+            return NotFound(ex.Message); // zwraca 404
         }
-        genre.Name = updateGenreInDto.Name;
-        dbContext.SaveChanges();
-
-        return Ok(genre);
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
-    [HttpDelete]
-    public IActionResult DeleteGenre(Guid id)
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteGenre(Guid id)
     {
-        var genre = dbContext.Genres.Find(id);
-        if (genre is null)
+        try
         {
-            return NotFound();
-        }
-        dbContext.Genres.Remove(genre);
-        dbContext.SaveChanges();
+            var result = await _mediator.Send(new DeleteGenreCommand
+            {
+                Id = id
+            });
 
-        return Ok(genre);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message); // zwraca 404
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        } 
     }
 }
