@@ -1,6 +1,8 @@
-﻿namespace testAPIDatabase.Entities
+﻿using testAPIDatabase.Entities;
+
+namespace testAPIDatabase.Dtos
 {
-    public class BookGenre
+    public class BookGenreDto
     {
         public Guid Id { get; set; }
         public Guid BookId { get; set; }
